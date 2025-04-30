@@ -1,0 +1,74 @@
+version: '3.7'
+services:
+  frontend:
+    build:
+      context: ./src/frontend
+      dockerfile: ../../src/docker/frontend/Dockerfile
+    ports:
+      - "3100:3000"
+    depends_on:
+      - backend
+    networks:
+      - investment-app-network
+    volumes:
+      - ./src/frontend:/app
+      - /app/node_modules
+
+  backend:
+    build:
+      context: ./src/backend
+      dockerfile: ../../src/docker/backend/Dockerfile
+    ports:
+      - "5100:5000"
+    environment:
+      - DATABASE_URL=postgres://user:password@db:5432/investment_db
+    depends_on:
+      - db
+    networks:
+      - investment-app-network
+    volumes:
+      - ./src/backend:/app
+      - /app/node_modules
+
+  prediction:
+    build:
+      context: ./src/prediction
+      dockerfile: ./Dockerfile
+    ports:
+      - "5200:5001"
+    networks:
+      - investment-app-network
+    volumes:
+      - ./src/prediction:/app
+
+  trading_bot:
+    build:
+      context: ./src/trading_bot
+      dockerfile: ./Dockerfile
+    depends_on:
+      - backend
+      - prediction
+    networks:
+      - investment-app-network
+    volumes:
+      - ./src/trading_bot:/app
+
+  db:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: investment_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - investment-db-data:/var/lib/postgresql/data
+    networks:
+      - investment-app-network
+
+networks:
+  investment-app-network:
+    driver: bridge
+
+volumes:
+  investment-db-data: 

@@ -24,6 +24,7 @@ var/
 venv/
 ENV/
 .env
+.venv/
 
 # IDE
 .idea/
@@ -56,4 +57,15 @@ models/
 .Spotlight-V100
 .Trashes
 ehthumbs.db
-Thumbs.db 
+Thumbs.db
+
+# Node.js
+node_modules/
+**/node_modules/
+src/frontend/node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# Project specific
+Context.md 
