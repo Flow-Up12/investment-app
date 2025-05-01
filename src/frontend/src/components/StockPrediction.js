@@ -5,7 +5,7 @@ import { fetchUserProfile } from '../store/slices/userSlice';
 import { fetchPortfolio } from '../store/slices/portfolioSlice';
 import StockChart from './StockChart';
 
-const StockPrediction = ({ symbol }) => {
+const StockPrediction = ({ symbol, timeRange = '1D' }) => {
   const dispatch = useDispatch();
   const { prediction, loading, error, transactionMessage } = useSelector((state) => state.stocks);
   const { profile } = useSelector((state) => state.user);
@@ -13,14 +13,17 @@ const StockPrediction = ({ symbol }) => {
   const [sharesToBuy, setSharesToBuy] = useState('');
   const [retryCount, setRetryCount] = useState(0);
 
-  // Fetch prediction when symbol changes with retry logic
+  // Fetch prediction when symbol or timeRange changes with retry logic
   useEffect(() => {
     if (symbol) {
       let isMounted = true;
       const MAX_RETRIES = 5;
       
       const fetchData = () => {
-        dispatch(fetchStockPrediction(symbol))
+        dispatch(fetchStockPrediction({ 
+          symbol,
+          range: timeRange 
+        }))
           .then(result => {
             if (!isMounted) return;
             
@@ -67,7 +70,7 @@ const StockPrediction = ({ symbol }) => {
         isMounted = false; // Prevent state updates if component unmounts during retry
       };
     }
-  }, [symbol, dispatch, retryCount]);
+  }, [symbol, timeRange, dispatch, retryCount]);
 
   // Clear transaction message when component unmounts
   useEffect(() => {
@@ -181,7 +184,7 @@ const StockPrediction = ({ symbol }) => {
           <button 
             onClick={() => {
               setRetryCount(0);
-              dispatch(fetchStockPrediction(symbol));
+              dispatch(fetchStockPrediction({ symbol, range: timeRange }));
             }}
             className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm transition-colors"
           >
@@ -193,7 +196,8 @@ const StockPrediction = ({ symbol }) => {
               onClick={() => {
                 dispatch(fetchStockPrediction({
                   symbol: error.symbol || symbol,
-                  useSynthetic: true
+                  useSynthetic: true,
+                  range: timeRange
                 }));
               }}
               className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg text-sm transition-colors"
@@ -219,19 +223,12 @@ const StockPrediction = ({ symbol }) => {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-5">
-        <div>
-          <h2 className="text-2xl font-bold">{prediction.symbol}</h2>
-          <p className="text-gray-600">{prediction.company_name || symbol}</p>
-        </div>
-        <button
-          onClick={handleBuyClick}
-          className="bg-blue-500 hover:bg-blue-600 text-white px-5 py-2 rounded-lg font-medium transition-colors"
-        >
-          Buy Stock
-        </button>
+      {/* Company Info Section */}
+      <div className="mb-5">
+        <h2 className="text-lg font-semibold text-gray-800">{prediction.company_name || symbol}</h2>
+        <p className="text-sm text-gray-600">{prediction.company_description || ''}</p>
       </div>
-
+      
       {prediction.dataType === "synthetic" && (
         <div className="bg-blue-50 border-l-4 border-blue-400 text-blue-700 p-3 mb-5 rounded-r-md text-sm">
           <div className="flex items-start">
@@ -248,7 +245,15 @@ const StockPrediction = ({ symbol }) => {
 
       {prediction.data_warning && (
         <div className="bg-yellow-50 text-yellow-700 p-3 rounded-md mb-5 text-sm">
-          {prediction.data_warning}
+          <div className="flex items-start">
+            <svg className="h-5 w-5 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+            </svg>
+            <div>
+              <p className="font-medium">Data Quality Warning</p>
+              <p className="text-sm mt-1">{prediction.data_warning}</p>
+            </div>
+          </div>
         </div>
       )}
 
@@ -281,17 +286,17 @@ const StockPrediction = ({ symbol }) => {
         
         <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-100">
           <h3 className="text-sm font-medium text-gray-500 mb-2">7-Day Forecast</h3>
-          <p className={`text-2xl font-bold ${parseFloat(forecast.percentChange) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+          <p className={`text-2xl font-bold ${parseFloat(forecast.percentChange) >= 0 ? 'text-[#00C805]' : 'text-[#FF5000]'}`}>
             ${forecast.price}
           </p>
-          <p className={`text-xs mt-1 ${parseFloat(forecast.percentChange) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+          <p className={`text-xs mt-1 ${parseFloat(forecast.percentChange) >= 0 ? 'text-[#00C805]' : 'text-[#FF5000]'}`}>
             {parseFloat(forecast.percentChange) >= 0 ? '+' : ''}{forecast.percentChange}% change
           </p>
         </div>
       </div>
 
       <div className="mb-8">
-        <StockChart predictionData={prediction} />
+        <StockChart predictionData={prediction} timeRange={timeRange} />
       </div>
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
@@ -336,7 +341,7 @@ const StockPrediction = ({ symbol }) => {
                   <tr key={date} className="hover:bg-gray-50">
                     <td className="py-3 px-4 text-sm text-gray-900">{date}</td>
                     <td className="py-3 px-4 text-sm text-gray-900 text-right">${realisticPrice.toFixed(2)}</td>
-                    <td className={`py-3 px-4 text-sm text-right ${cappedPctChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    <td className={`py-3 px-4 text-sm text-right ${cappedPctChange >= 0 ? 'text-[#00C805]' : 'text-[#FF5000]'}`}>
                       {cappedPctChange >= 0 ? '+' : ''}{cappedPctChange.toFixed(2)}%
                     </td>
                   </tr>
@@ -366,7 +371,7 @@ const StockPrediction = ({ symbol }) => {
             <div className="bg-gray-50 p-4 rounded-lg mb-4">
               <div className="flex justify-between mb-2">
                 <span className="text-gray-600">Current Price:</span>
-                <span className="font-medium">${prediction.current_price}</span>
+                <span className="font-medium">${prediction.current_price.toFixed(2)}</span>
               </div>
               <div className="flex justify-between mb-2">
                 <span className="text-gray-600">Your Balance:</span>
@@ -412,13 +417,13 @@ const StockPrediction = ({ symbol }) => {
                 <button
                   type="button"
                   onClick={() => setBuyModalOpen(false)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                  className="px-4 py-2 border border-gray-300 rounded-full text-gray-700 hover:bg-gray-50"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors disabled:bg-blue-300"
+                  className="bg-[#00C805] text-white px-4 py-2 rounded-full hover:bg-[#00b305] transition-colors disabled:bg-[#7FE3B5]"
                   disabled={loading || !sharesToBuy}
                 >
                   {loading ? 'Processing...' : 'Buy Shares'}

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchUserProfile, addFunds } from '../store/slices/userSlice';
 import { fetchPortfolio, fetchPortfolioSummary } from '../store/slices/portfolioSlice';
@@ -42,6 +42,10 @@ const Dashboard = () => {
     labels: [],
     datasets: []
   });
+  
+  // Add refresh timer for auto-refreshing data
+  const [autoRefresh, setAutoRefresh] = useState(true);
+  const refreshTimerRef = useRef(null);
   
   // Generate mock performance data based on timeframe
   useEffect(() => {
@@ -144,10 +148,40 @@ const Dashboard = () => {
   };
   
   useEffect(() => {
+    // Load initial data
     dispatch(fetchUserProfile());
     dispatch(fetchPortfolio());
     dispatch(fetchPortfolioSummary());
-  }, [dispatch]);
+    
+    // Set up auto-refresh
+    if (autoRefresh) {
+      startAutoRefreshTimer();
+    }
+    
+    return () => {
+      if (refreshTimerRef.current) {
+        clearInterval(refreshTimerRef.current);
+      }
+    };
+  }, [dispatch, autoRefresh]);
+  
+  const startAutoRefreshTimer = () => {
+    if (refreshTimerRef.current) {
+      clearInterval(refreshTimerRef.current);
+    }
+    
+    // Refresh every 30 seconds
+    refreshTimerRef.current = setInterval(() => {
+      refreshDashboardData();
+    }, 30000);
+  };
+  
+  const refreshDashboardData = () => {
+    // Refresh all data silently (without loading indicators)
+    dispatch(fetchUserProfile());
+    dispatch(fetchPortfolio());
+    dispatch(fetchPortfolioSummary());
+  };
   
   const handleAddFundsSubmit = (e) => {
     e.preventDefault();

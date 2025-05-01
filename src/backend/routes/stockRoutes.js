@@ -22,6 +22,9 @@ router.post('/sell', stockController.sellStock);
 // Get user portfolio
 router.get('/portfolio', stockController.getPortfolio);
 
+// Record stock price data - temporarily commented out due to missing controller function
+// router.post('/prices/record', stockController.recordStockPrice);
+
 // Get current price for a stock
 router.get('/current-price', async (req, res) => {
   try {

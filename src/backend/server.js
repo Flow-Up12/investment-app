@@ -3,6 +3,7 @@ const cors = require('cors');
 const { sequelize, testConnection } = require('./config/database');
 const userRoutes = require('./routes/userRoutes');
 const stockRoutes = require('./routes/stockRoutes');
+const botRoutes = require('./routes/botRoutes');
 
 // Initialize Express app
 const app = express();
@@ -19,6 +20,7 @@ app.use(express.urlencoded({ extended: true }));
 // Routes
 app.use('/api/users', userRoutes);
 app.use('/api/stocks', stockRoutes);
+app.use('/api/bot', botRoutes);
 
 // Health check route
 app.get('/health', (req, res) => {
@@ -42,9 +44,9 @@ const syncDatabase = async () => {
       await User.create({
         username: 'investor',
         email: 'investor@example.com',
-        balance: 50.00,
-        investment_limit: 50.00,
-        daily_limit: 10.00
+        balance: 10000.00,
+        investment_limit: 1000.00,
+        daily_limit: 3000.00
       });
       console.log('Default user created');
     }

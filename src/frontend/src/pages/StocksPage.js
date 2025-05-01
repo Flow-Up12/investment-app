@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { setSelectedStock } from '../store/slices/stocksSlice';
+import { setSelectedStock, fetchStockPrediction } from '../store/slices/stocksSlice';
 import Header from '../components/Header';
 import StockSearch from '../components/StockSearch';
 import StockPrediction from '../components/StockPrediction';
@@ -12,9 +12,10 @@ import { fetchPortfolio } from '../store/slices/portfolioSlice';
 const StocksPage = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { selectedStock, topMovers } = useSelector((state) => state.stocks);
+  const { selectedStock, topMovers, prediction } = useSelector((state) => state.stocks);
   const { holdings } = useSelector((state) => state.portfolio);
   const [activeTab, setActiveTab] = useState('search'); // 'search', 'movers', 'portfolio', or 'watchlist'
+  const [timeRange, setTimeRange] = useState('1D'); // '1D', '1W', '1M', '3M', '1Y', '5Y', 'MAX'
   
   // Initialize watchlist manager
   const watchlistManager = WatchlistManager({ onSelectStock: handleSelectStock });
@@ -26,13 +27,43 @@ const StocksPage = () => {
     dispatch(fetchPortfolio());
   }, [dispatch]);
   
+  // When time range changes, fetch updated prediction data
+  useEffect(() => {
+    if (selectedStock) {
+      dispatch(fetchStockPrediction({
+        symbol: selectedStock,
+        range: timeRange
+      }));
+    }
+  }, [selectedStock, timeRange, dispatch]);
+  
   function handleSelectStock(symbol) {
     dispatch(setSelectedStock(symbol));
+    // Reset time range to 1D when new stock is selected
+    setTimeRange('1D');
   }
   
   const handleViewDetails = (symbol) => {
     navigate(`/stocks/${symbol}`);
   };
+
+  // Calculate price change from prediction data
+  const getPriceChange = () => {
+    if (!prediction || !prediction.current_price) return { value: '0.00', percent: '0.00', isPositive: true };
+    
+    const currentPrice = prediction.current_price;
+    const previousPrice = prediction.historical_data?.prices?.[0] || currentPrice;
+    const change = currentPrice - previousPrice;
+    const percentChange = (change / previousPrice) * 100;
+    
+    return {
+      value: change.toFixed(2),
+      percent: percentChange.toFixed(2),
+      isPositive: change >= 0
+    };
+  };
+
+  const priceChange = getPriceChange();
   
   return (
     <div className="bg-gray-50 min-h-screen">
@@ -192,13 +223,64 @@ const StocksPage = () => {
           <div className="lg:col-span-3">
             {selectedStock ? (
               <div className="bg-white rounded-lg shadow-sm p-5">
-                <StockPrediction symbol={selectedStock} />
-                <div className="text-center mt-6">
+                <div className="flex justify-between items-start mb-5">
+                  <div>
+                    <h2 className="text-2xl font-bold">{selectedStock}</h2>
+                    {prediction && (
+                      <>
+                        <p className="text-3xl font-bold my-2">${prediction.current_price ? prediction.current_price.toFixed(2) : '0.00'}</p>
+                        <p className={`text-sm ${priceChange.isPositive ? 'text-green-600' : 'text-red-600'}`}>
+                          {priceChange.isPositive ? '+' : ''}{priceChange.value} ({priceChange.isPositive ? '+' : ''}{priceChange.percent}%)
+                        </p>
+                      </>
+                    )}
+                  </div>
                   <button
                     onClick={() => handleViewDetails(selectedStock)}
-                    className="bg-blue-500 hover:bg-blue-600 text-white px-5 py-2 rounded-lg font-medium transition-colors"
+                    className="bg-[#00C805] hover:bg-[#00b305] text-white px-4 py-2 text-sm rounded-full font-medium transition-colors"
                   >
-                    View Detailed Analysis
+                    Buy Stock
+                  </button>
+                </div>
+                
+                {/* Time Range Selector - Robinhood style */}
+                <div className="flex justify-start mb-4 border-b pb-2">
+                  {['1H', '1D', '1W', '1M', '3M', '1Y', '5Y', 'ALL'].map((range) => (
+                    <button
+                      key={range}
+                      onClick={() => setTimeRange(range)}
+                      className={`mr-4 px-2 py-1 text-sm font-medium rounded-lg ${
+                        timeRange === range 
+                          ? 'bg-[#F5F8FA] text-black font-semibold border-b-2 border-black' 
+                          : 'text-gray-500 hover:bg-gray-100'
+                      }`}
+                    >
+                      {range}
+                    </button>
+                  ))}
+                </div>
+                
+                <StockPrediction 
+                  symbol={selectedStock} 
+                  timeRange={timeRange}
+                />
+                
+                <div className="flex justify-between mt-6">
+                  <button
+                    onClick={() => addToWatchlist({
+                      symbol: selectedStock,
+                      name: prediction?.company_name || 'Unknown',
+                      price: prediction?.current_price
+                    })}
+                    className="border border-[#00C805] text-[#00C805] hover:bg-[#E6F5EC] px-5 py-2 rounded-full font-medium transition-colors"
+                  >
+                    Add to Watchlist
+                  </button>
+                  <button
+                    onClick={() => handleViewDetails(selectedStock)}
+                    className="text-[#00C805] hover:text-[#00b305] px-5 py-2 font-medium"
+                  >
+                    View Detailed Analysis →
                   </button>
                 </div>
               </div>

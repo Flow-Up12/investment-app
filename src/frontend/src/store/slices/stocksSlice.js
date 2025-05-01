@@ -6,7 +6,7 @@ export const fetchStockSymbols = createAsyncThunk(
   'stocks/fetchSymbols',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await api.get('/stocks/symbols');
+      const response = await api.get('/api/stocks/symbols');
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.error || 'Failed to fetch stock symbols');
@@ -21,17 +21,22 @@ export const fetchStockPrediction = createAsyncThunk(
       // Handle both string input and object with options
       let symbol;
       let useSynthetic = false;
+      let range = '1D'; // Default range
       
       if (typeof payload === 'string') {
         symbol = payload;
       } else {
         symbol = payload.symbol;
         useSynthetic = payload.useSynthetic || false;
+        range = payload.range || '1D'; // Get range from payload if provided
       }
       
-      // Add the use_synthetic parameter to control whether synthetic data should be used
-      const response = await api.get(`/stocks/predict/${symbol}`, {
-        params: { use_synthetic: useSynthetic }
+      // Add the use_synthetic parameter and range parameter
+      const response = await api.get(`/api/stocks/predict/${symbol}`, {
+        params: { 
+          use_synthetic: useSynthetic,
+          range: range 
+        }
       });
       return response.data;
     } catch (error) {
@@ -52,7 +57,7 @@ export const buyStock = createAsyncThunk(
   'stocks/buyStock',
   async ({ symbol, shares }, { rejectWithValue }) => {
     try {
-      const response = await api.post('/stocks/buy', { symbol, shares });
+      const response = await api.post('/api/stocks/buy', { symbol, shares });
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.error || 'Failed to buy stock');
@@ -64,7 +69,7 @@ export const sellStock = createAsyncThunk(
   'stocks/sellStock',
   async ({ symbol, shares }, { rejectWithValue }) => {
     try {
-      const response = await api.post('/stocks/sell', { symbol, shares });
+      const response = await api.post('/api/stocks/sell', { symbol, shares });
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.error || 'Failed to sell stock');
@@ -77,7 +82,7 @@ export const fetchTopMovers = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       // Use the actual API endpoint now that it's available
-      const response = await api.get('/stocks/top-movers');
+      const response = await api.get('/api/stocks/top-movers');
       return response.data;
     } catch (error) {
       // If the error response contains fallback data, use that instead of rejecting

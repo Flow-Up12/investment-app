@@ -15,7 +15,6 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import mean_absolute_error
 from sklearn.model_selection import train_test_split
-
 # Import our finnhub service
 from finnhub_service import (
     get_stock_price, 

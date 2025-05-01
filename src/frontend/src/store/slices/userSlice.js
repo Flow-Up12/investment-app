@@ -6,7 +6,7 @@ export const fetchUserProfile = createAsyncThunk(
   'user/fetchProfile',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await api.get('/users/profile');
+      const response = await api.get('/api/users/profile');
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.error || 'Failed to fetch profile');
@@ -18,7 +18,7 @@ export const addFunds = createAsyncThunk(
   'user/addFunds',
   async (amount, { rejectWithValue }) => {
     try {
-      const response = await api.post('/users/funds', { amount });
+      const response = await api.post('/api/users/funds', { amount });
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.error || 'Failed to add funds');
@@ -30,7 +30,7 @@ export const updateSettings = createAsyncThunk(
   'user/updateSettings',
   async (settings, { rejectWithValue }) => {
     try {
-      const response = await api.put('/users/settings', settings);
+      const response = await api.put('/api/users/settings', settings);
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.error || 'Failed to update settings');

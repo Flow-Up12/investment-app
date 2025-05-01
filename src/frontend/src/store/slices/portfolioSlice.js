@@ -6,7 +6,7 @@ export const fetchPortfolio = createAsyncThunk(
   'portfolio/fetchPortfolio',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await api.get('/stocks/portfolio');
+      const response = await api.get('/api/stocks/portfolio');
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.error || 'Failed to fetch portfolio');
@@ -18,7 +18,7 @@ export const fetchPortfolioSummary = createAsyncThunk(
   'portfolio/fetchSummary',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await api.get('/users/portfolio-summary');
+      const response = await api.get('/api/users/portfolio-summary');
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.error || 'Failed to fetch portfolio summary');
@@ -30,7 +30,7 @@ export const fetchTransactions = createAsyncThunk(
   'portfolio/fetchTransactions',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await api.get('/users/transactions');
+      const response = await api.get('/api/users/transactions');
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.error || 'Failed to fetch transactions');

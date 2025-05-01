@@ -23,7 +23,7 @@ const StockSearch = ({ onSelectStock, onAddToWatchlist }) => {
         setLoading(true);
         setError(null);
         
-        const response = await api.get('/stocks/search-symbol', {
+        const response = await api.get('/api/stocks/search-symbol', {
           params: { q: searchQuery }
         });
         

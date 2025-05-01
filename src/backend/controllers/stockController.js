@@ -9,8 +9,10 @@ const getPrediction = async (req, res) => {
     const { symbol } = req.params;
     const days = req.query.days ? parseInt(req.query.days) : 7;
     const useSynthetic = req.query.use_synthetic === 'true';
+    const range = req.query.range || '1D'; // Add range parameter support
     
-    const prediction = await stockService.getPrediction(symbol, days, useSynthetic);
+    // Pass the range parameter to the service
+    const prediction = await stockService.getPrediction(symbol, days, useSynthetic, range);
     res.status(200).json(prediction);
   } catch (error) {
     res.status(500).json({ error: error.message });

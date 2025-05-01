@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Get the API URL from the environment or default to localhost
-const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5100/api';
+const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5100';
 
 const api = axios.create({
   baseURL: apiUrl,
@@ -24,7 +24,7 @@ export const realTimeStockService = {
   // Get current price for a single stock
   getCurrentPrice: async (symbol) => {
     try {
-      const response = await axios.get('/api/stocks/current-price', {
+      const response = await axios.get(`${apiUrl}/api/stocks/current-price`, {
         params: { symbol }
       });
       return response.data;
@@ -38,7 +38,7 @@ export const realTimeStockService = {
   getBulkPrices: async (symbols) => {
     try {
       const symbolsStr = Array.isArray(symbols) ? symbols.join(',') : symbols;
-      const response = await axios.get('/api/stocks/bulk-prices', {
+      const response = await axios.get(`${apiUrl}/api/stocks/bulk-prices`, {
         params: { symbols: symbolsStr }
       });
       return response.data;
